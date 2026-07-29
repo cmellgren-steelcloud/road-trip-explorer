@@ -1,0 +1,434 @@
+// Road Trip Explorer — app logic
+const STORAGE_KEY = 'rte_v1';
+const BOARD_SIZE = 5;
+const FREE_INDEX = 12; // center of 5x5
+
+let state = loadState();
+
+// ---------------- Persistence ----------------
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (e) {
+    return null;
+  }
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+// ---------------- Board generation ----------------
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function poolForRegion(region) {
+  return ITEMS.filter(i => i.regions.includes('any') || i.regions.includes(region));
+}
+
+function generateBingoBoard(region) {
+  const pool = poolForRegion(region);
+  const specific = shuffle(pool.filter(i => !i.regions.includes('any')));
+  const anyItems = shuffle(pool.filter(i => i.regions.includes('any')));
+
+  const chosen = [];
+  const seen = new Set();
+  for (const item of specific) {
+    if (chosen.length >= 8) break;
+    if (!seen.has(item.id)) { chosen.push(item); seen.add(item.id); }
+  }
+  for (const item of anyItems) {
+    if (chosen.length >= 24) break;
+    if (!seen.has(item.id)) { chosen.push(item); seen.add(item.id); }
+  }
+  // fallback if region pool is somehow small
+  for (const item of shuffle(ITEMS)) {
+    if (chosen.length >= 24) break;
+    if (!seen.has(item.id)) { chosen.push(item); seen.add(item.id); }
+  }
+
+  const finalOrder = shuffle(chosen).slice(0, 24);
+  const board = [];
+  let ptr = 0;
+  for (let i = 0; i < 25; i++) {
+    if (i === FREE_INDEX) board.push('FREE');
+    else board.push(finalOrder[ptr++].id);
+  }
+  return board;
+}
+
+function checklistItems(region) {
+  const pool = poolForRegion(region);
+  return pool.slice().sort((a, b) => {
+    if (a.category !== b.category) return a.category.localeCompare(b.category);
+    return a.points - b.points;
+  });
+}
+
+function itemById(id) {
+  return ITEMS.find(i => i.id === id);
+}
+
+// ---------------- Setup screen ----------------
+
+function populateRegionSelect(selectEl) {
+  selectEl.innerHTML = '';
+  REGIONS.forEach(r => {
+    const opt = document.createElement('option');
+    opt.value = r.id;
+    opt.textContent = `${r.emoji} ${r.name}`;
+    selectEl.appendChild(opt);
+  });
+}
+
+function initSetupScreen() {
+  const regionSelect = document.getElementById('region-select');
+  const regionDesc = document.getElementById('region-desc');
+  populateRegionSelect(regionSelect);
+
+  function updateDesc() {
+    const r = REGIONS.find(r => r.id === regionSelect.value);
+    regionDesc.textContent = r ? r.description : '';
+  }
+  regionSelect.addEventListener('change', updateDesc);
+  updateDesc();
+
+  document.getElementById('start-trip-btn').addEventListener('click', () => {
+    const tripName = document.getElementById('trip-name').value.trim() || 'Road Trip';
+    const region = regionSelect.value;
+    const origin = document.getElementById('origin-input').value.trim();
+    const destination = document.getElementById('destination-input').value.trim();
+    const mapsApiKey = document.getElementById('maps-api-key').value.trim();
+
+    state = {
+      settings: { tripName, region, origin, destination, mapsApiKey },
+      board: generateBingoBoard(region),
+      found: [],
+    };
+    saveState();
+    showApp();
+  });
+}
+
+// ---------------- Main app ----------------
+
+let currentView = 'bingo';
+
+function showApp() {
+  document.getElementById('setup-screen').classList.add('hidden');
+  document.getElementById('app-screen').classList.remove('hidden');
+  document.getElementById('header-trip-name').textContent = state.settings.tripName;
+  const r = REGIONS.find(r => r.id === state.settings.region);
+  document.getElementById('header-region-badge').textContent = r ? `${r.emoji} ${r.name}` : '';
+  renderBingo();
+  renderChecklist();
+  updateProgress();
+  updateMapTab();
+}
+
+function isFound(itemId) {
+  return itemId === 'FREE' || state.found.includes(itemId);
+}
+
+function toggleFound(itemId) {
+  if (itemId === 'FREE') return;
+  const idx = state.found.indexOf(itemId);
+  if (idx >= 0) state.found.splice(idx, 1);
+  else state.found.push(itemId);
+  saveState();
+  renderBingo();
+  renderChecklist();
+  updateProgress();
+  checkWin();
+}
+
+function updateProgress() {
+  const total = checklistItems(state.settings.region).length;
+  const found = state.found.length;
+  const pct = total ? Math.round((found / total) * 100) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = `${found} / ${total} found`;
+}
+
+// ---------------- Bingo rendering ----------------
+
+function renderBingo() {
+  const grid = document.getElementById('bingo-grid');
+  grid.innerHTML = '';
+  state.board.forEach((itemId, idx) => {
+    const cell = document.createElement('div');
+    cell.className = 'bingo-cell';
+
+    if (itemId === 'FREE') {
+      cell.classList.add('free', 'found');
+      cell.innerHTML = `<div class="cell-emoji">⭐</div><div>FREE</div>`;
+    } else {
+      const item = itemById(itemId);
+      cell.classList.add('points-' + item.points);
+      if (isFound(itemId)) cell.classList.add('found');
+      cell.innerHTML = `
+        <span class="points-dot">${'★'.repeat(item.points === 1 ? 1 : item.points === 3 ? 2 : 3)}</span>
+        <div class="cell-emoji">${item.emoji}</div>
+        <div>${item.label}</div>
+      `;
+      cell.addEventListener('click', () => toggleFound(itemId));
+    }
+    grid.appendChild(cell);
+  });
+}
+
+// ---------------- Checklist rendering ----------------
+
+function renderChecklist() {
+  const container = document.getElementById('checklist-container');
+  container.innerHTML = '';
+  const items = checklistItems(state.settings.region);
+  const byCategory = {};
+  items.forEach(item => {
+    if (!byCategory[item.category]) byCategory[item.category] = [];
+    byCategory[item.category].push(item);
+  });
+
+  Object.keys(byCategory).forEach(cat => {
+    const section = document.createElement('div');
+    section.className = 'checklist-category';
+    const h4 = document.createElement('h4');
+    h4.textContent = cat;
+    section.appendChild(h4);
+
+    byCategory[cat].forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'checklist-item' + (isFound(item.id) ? ' found' : '');
+      row.innerHTML = `
+        <div class="cell-emoji">${item.emoji}</div>
+        <div class="item-info">
+          <div class="item-label">${item.label}</div>
+          ${item.fact ? `<div class="item-fact">${item.fact}</div>` : ''}
+        </div>
+        <span class="points-badge">${item.points} pt${item.points > 1 ? 's' : ''}</span>
+        <div class="checkbox">${isFound(item.id) ? '✓' : ''}</div>
+      `;
+      row.addEventListener('click', () => toggleFound(item.id));
+      section.appendChild(row);
+    });
+    container.appendChild(section);
+  });
+}
+
+// ---------------- Bingo win detection ----------------
+
+function checkWin() {
+  const g = state.board.map(id => isFound(id));
+  const lines = [];
+  for (let r = 0; r < 5; r++) lines.push([0,1,2,3,4].map(c => r * 5 + c));
+  for (let c = 0; c < 5; c++) lines.push([0,1,2,3,4].map(r => r * 5 + c));
+  lines.push([0,6,12,18,24]);
+  lines.push([4,8,12,16,20]);
+
+  const hasBingo = lines.some(line => line.every(idx => g[idx]));
+  const blackout = g.every(Boolean);
+
+  if (blackout && !state.blackoutShown) {
+    state.blackoutShown = true;
+    saveState();
+    showWinBanner('🏆', 'BLACKOUT! You found everything!');
+  } else if (hasBingo && !state.bingoShown) {
+    state.bingoShown = true;
+    saveState();
+    showWinBanner('🎉', 'BINGO!');
+  }
+}
+
+function showWinBanner(emoji, text) {
+  document.getElementById('win-emoji').textContent = emoji;
+  document.getElementById('win-text').textContent = text;
+  document.getElementById('win-banner').classList.remove('hidden');
+  launchConfetti();
+}
+
+function launchConfetti() {
+  const layer = document.getElementById('confetti-layer');
+  const colors = ['#ffb703', '#4cc9f0', '#52b788', '#e63946', '#7b2cbf'];
+  for (let i = 0; i < 80; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + 'vw';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.animationDuration = (2 + Math.random() * 2) + 's';
+    piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    layer.appendChild(piece);
+    setTimeout(() => piece.remove(), 4500);
+  }
+}
+
+// ---------------- Tabs & view toggle ----------------
+
+function initTabs() {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  document.getElementById('view-bingo-btn').addEventListener('click', () => {
+    currentView = 'bingo';
+    document.getElementById('view-bingo-btn').classList.add('active');
+    document.getElementById('view-checklist-btn').classList.remove('active');
+    document.getElementById('bingo-view').classList.remove('hidden');
+    document.getElementById('checklist-view').classList.add('hidden');
+  });
+  document.getElementById('view-checklist-btn').addEventListener('click', () => {
+    currentView = 'checklist';
+    document.getElementById('view-checklist-btn').classList.add('active');
+    document.getElementById('view-bingo-btn').classList.remove('active');
+    document.getElementById('checklist-view').classList.remove('hidden');
+    document.getElementById('bingo-view').classList.add('hidden');
+  });
+
+  document.getElementById('win-close-btn').addEventListener('click', () => {
+    document.getElementById('win-banner').classList.add('hidden');
+  });
+}
+
+// ---------------- Map tab ----------------
+
+function updateMapTab() {
+  const key = state.settings.mapsApiKey;
+  const noKeyEl = document.getElementById('map-no-key');
+  const contentEl = document.getElementById('map-content');
+
+  if (!key) {
+    noKeyEl.classList.remove('hidden');
+    contentEl.classList.add('hidden');
+    return;
+  }
+  noKeyEl.classList.add('hidden');
+  contentEl.classList.remove('hidden');
+
+  const { origin, destination } = state.settings;
+  const routeFrame = document.getElementById('route-frame');
+  if (origin && destination) {
+    routeFrame.src = `https://www.google.com/maps/embed/v1/directions?key=${encodeURIComponent(key)}&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`;
+  } else {
+    routeFrame.src = `https://www.google.com/maps/embed/v1/place?key=${encodeURIComponent(key)}&q=${encodeURIComponent(destination || origin || 'United States')}`;
+  }
+}
+
+function initMapTab() {
+  document.getElementById('add-key-btn').addEventListener('click', openSettings);
+
+  document.getElementById('locate-btn').addEventListener('click', () => {
+    const status = document.getElementById('locate-status');
+    const key = state.settings.mapsApiKey;
+    if (!key) {
+      status.textContent = 'Add a Google Maps API key in Settings first.';
+      return;
+    }
+    if (!navigator.geolocation) {
+      status.textContent = 'This browser does not support location.';
+      return;
+    }
+    status.textContent = 'Finding your location…';
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const { latitude, longitude } = pos.coords;
+        const frame = document.getElementById('location-frame');
+        frame.src = `https://www.google.com/maps/embed/v1/place?key=${encodeURIComponent(key)}&q=${latitude},${longitude}&zoom=14`;
+        frame.classList.remove('hidden');
+        status.textContent = `Updated ${new Date().toLocaleTimeString()}`;
+      },
+      err => {
+        status.textContent = 'Could not get your location: ' + err.message;
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  });
+}
+
+// ---------------- Settings modal ----------------
+
+function openSettings() {
+  populateRegionSelect(document.getElementById('s-region-select'));
+  document.getElementById('s-trip-name').value = state.settings.tripName;
+  document.getElementById('s-region-select').value = state.settings.region;
+  document.getElementById('s-origin-input').value = state.settings.origin || '';
+  document.getElementById('s-destination-input').value = state.settings.destination || '';
+  document.getElementById('s-maps-api-key').value = state.settings.mapsApiKey || '';
+  document.getElementById('settings-modal').classList.remove('hidden');
+}
+
+function closeSettings() {
+  document.getElementById('settings-modal').classList.add('hidden');
+}
+
+function initSettings() {
+  document.getElementById('settings-btn').addEventListener('click', openSettings);
+  document.getElementById('settings-cancel-btn').addEventListener('click', closeSettings);
+
+  document.getElementById('settings-save-btn').addEventListener('click', () => {
+    const newRegion = document.getElementById('s-region-select').value;
+    const regionChanged = newRegion !== state.settings.region;
+
+    state.settings.tripName = document.getElementById('s-trip-name').value.trim() || 'Road Trip';
+    state.settings.region = newRegion;
+    state.settings.origin = document.getElementById('s-origin-input').value.trim();
+    state.settings.destination = document.getElementById('s-destination-input').value.trim();
+    state.settings.mapsApiKey = document.getElementById('s-maps-api-key').value.trim();
+
+    if (regionChanged) {
+      state.board = generateBingoBoard(newRegion);
+      state.found = [];
+      state.bingoShown = false;
+      state.blackoutShown = false;
+    }
+    saveState();
+    closeSettings();
+    showApp();
+  });
+
+  document.getElementById('new-board-btn').addEventListener('click', () => {
+    if (!confirm('Shuffle a new bingo board? Your found progress on the board will reset.')) return;
+    state.board = generateBingoBoard(state.settings.region);
+    state.found = [];
+    state.bingoShown = false;
+    state.blackoutShown = false;
+    saveState();
+    closeSettings();
+    showApp();
+  });
+
+  document.getElementById('reset-trip-btn').addEventListener('click', () => {
+    if (!confirm('Reset the entire trip? This clears everything and starts over.')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    state = null;
+    closeSettings();
+    document.getElementById('app-screen').classList.add('hidden');
+    document.getElementById('setup-screen').classList.remove('hidden');
+  });
+}
+
+// ---------------- Init ----------------
+
+document.addEventListener('DOMContentLoaded', () => {
+  initSetupScreen();
+  initTabs();
+  initMapTab();
+  initSettings();
+
+  if (state && state.settings) {
+    showApp();
+  }
+});
