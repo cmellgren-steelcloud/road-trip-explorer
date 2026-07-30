@@ -106,14 +106,12 @@ function initSetupScreen() {
   document.getElementById('start-trip-btn').addEventListener('click', () => {
     const tripName = document.getElementById('trip-name').value.trim() || 'Road Trip';
     const region = regionSelect.value;
-    const origin = document.getElementById('origin-input').value.trim();
-    const destination = document.getElementById('destination-input').value.trim();
-    const mapsApiKey = document.getElementById('maps-api-key').value.trim();
 
     state = {
-      settings: { tripName, region, origin, destination, mapsApiKey },
+      settings: { tripName, region },
       board: generateBingoBoard(region),
       found: [],
+      routeProgress: { passed: [] },
     };
     saveState();
     showApp();
@@ -125,6 +123,7 @@ function initSetupScreen() {
 let currentView = 'bingo';
 
 function showApp() {
+  if (!state.routeProgress) state.routeProgress = { passed: [] };
   document.getElementById('setup-screen').classList.add('hidden');
   document.getElementById('app-screen').classList.remove('hidden');
   document.getElementById('header-trip-name').textContent = state.settings.tripName;
@@ -133,7 +132,7 @@ function showApp() {
   renderBingo();
   renderChecklist();
   updateProgress();
-  updateMapTab();
+  renderRouteMap();
 }
 
 function isFound(itemId) {
@@ -303,58 +302,124 @@ function initTabs() {
   });
 }
 
-// ---------------- Map tab ----------------
+// ---------------- Route map (hardcoded, no external map API) ----------------
 
-function updateMapTab() {
-  const key = state.settings.mapsApiKey;
-  const noKeyEl = document.getElementById('map-no-key');
-  const contentEl = document.getElementById('map-content');
+const SVG_NS = 'http://www.w3.org/2000/svg';
 
-  if (!key) {
-    noKeyEl.classList.remove('hidden');
-    contentEl.classList.add('hidden');
-    return;
-  }
-  noKeyEl.classList.add('hidden');
-  contentEl.classList.remove('hidden');
-
-  const { origin, destination } = state.settings;
-  const routeFrame = document.getElementById('route-frame');
-  if (origin && destination) {
-    routeFrame.src = `https://www.google.com/maps/embed/v1/directions?key=${encodeURIComponent(key)}&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`;
-  } else {
-    routeFrame.src = `https://www.google.com/maps/embed/v1/place?key=${encodeURIComponent(key)}&q=${encodeURIComponent(destination || origin || 'United States')}`;
-  }
+function maxPassedMile() {
+  const passed = state.routeProgress.passed;
+  let max = 0;
+  ROUTE_STOPS.forEach(stop => {
+    if (passed.includes(stop.id) && stop.mile > max) max = stop.mile;
+  });
+  return max;
 }
 
-function initMapTab() {
-  document.getElementById('add-key-btn').addEventListener('click', openSettings);
+function nextStop() {
+  const currentMax = maxPassedMile();
+  return ROUTE_STOPS.find(stop => stop.mile > currentMax) || null;
+}
 
-  document.getElementById('locate-btn').addEventListener('click', () => {
-    const status = document.getElementById('locate-status');
-    const key = state.settings.mapsApiKey;
-    if (!key) {
-      status.textContent = 'Add a Google Maps API key in Settings first.';
-      return;
+function toggleStopPassed(stopId) {
+  const passed = state.routeProgress.passed;
+  const idx = passed.indexOf(stopId);
+  if (idx >= 0) passed.splice(idx, 1);
+  else passed.push(stopId);
+  saveState();
+  renderRouteMap();
+}
+
+function renderRouteMap() {
+  const segmentsG = document.getElementById('route-segments');
+  const markersG = document.getElementById('route-markers');
+  segmentsG.innerHTML = '';
+  markersG.innerHTML = '';
+
+  const currentMax = maxPassedMile();
+
+  // Segments between consecutive stops
+  for (let i = 0; i < ROUTE_STOPS.length - 1; i++) {
+    const a = ROUTE_STOPS[i];
+    const b = ROUTE_STOPS[i + 1];
+    const traveled = b.mile <= currentMax;
+    const line = document.createElementNS(SVG_NS, 'line');
+    line.setAttribute('x1', a.x);
+    line.setAttribute('y1', a.y);
+    line.setAttribute('x2', b.x);
+    line.setAttribute('y2', b.y);
+    line.setAttribute('class', 'route-segment' + (traveled ? ' traveled' : ''));
+    segmentsG.appendChild(line);
+  }
+
+  // City markers
+  ROUTE_STOPS.forEach(stop => {
+    const passed = state.routeProgress.passed.includes(stop.id);
+    const g = document.createElementNS(SVG_NS, 'g');
+    g.setAttribute('class', 'route-marker' + (passed ? ' passed' : ''));
+    g.setAttribute('tabindex', '0');
+    g.setAttribute('role', 'button');
+    g.setAttribute('aria-label', stop.name + (passed ? ' (passed)' : ''));
+
+    const circle = document.createElementNS(SVG_NS, 'circle');
+    circle.setAttribute('cx', stop.x);
+    circle.setAttribute('cy', stop.y);
+    circle.setAttribute('r', 11);
+    g.appendChild(circle);
+
+    if (passed) {
+      const check = document.createElementNS(SVG_NS, 'text');
+      check.setAttribute('x', stop.x);
+      check.setAttribute('y', stop.y);
+      check.setAttribute('class', 'marker-check');
+      check.textContent = '✓';
+      g.appendChild(check);
     }
-    if (!navigator.geolocation) {
-      status.textContent = 'This browser does not support location.';
-      return;
-    }
-    status.textContent = 'Finding your location…';
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        const { latitude, longitude } = pos.coords;
-        const frame = document.getElementById('location-frame');
-        frame.src = `https://www.google.com/maps/embed/v1/place?key=${encodeURIComponent(key)}&q=${latitude},${longitude}&zoom=14`;
-        frame.classList.remove('hidden');
-        status.textContent = `Updated ${new Date().toLocaleTimeString()}`;
-      },
-      err => {
-        status.textContent = 'Could not get your location: ' + err.message;
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
+
+    const label = document.createElementNS(SVG_NS, 'text');
+    label.setAttribute('x', stop.x);
+    label.setAttribute('y', stop.y - 16);
+    label.setAttribute('class', 'marker-label');
+    label.textContent = stop.name.split(',')[0];
+    g.appendChild(label);
+
+    g.addEventListener('click', () => toggleStopPassed(stop.id));
+    g.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleStopPassed(stop.id); }
+    });
+    markersG.appendChild(g);
+  });
+
+  // Progress bar + status text
+  const pct = Math.round((currentMax / ROUTE_TOTAL_MILES) * 100);
+  document.getElementById('route-progress-fill').style.width = pct + '%';
+  document.getElementById('route-progress-label').textContent = `${currentMax} / ${ROUTE_TOTAL_MILES} miles`;
+
+  const upcoming = nextStop();
+  const statusEl = document.getElementById('route-status');
+  if (!upcoming) {
+    statusEl.textContent = "🏁 You made it to Tawas City! Trip complete!";
+  } else {
+    const milesToGo = upcoming.mile - currentMax;
+    statusEl.textContent = `Next stop: ${upcoming.name} (about ${milesToGo} miles to go)`;
+  }
+
+  // Tap-friendly list beneath the map
+  const listEl = document.getElementById('route-stop-list');
+  listEl.innerHTML = '';
+  ROUTE_STOPS.forEach(stop => {
+    const passed = state.routeProgress.passed.includes(stop.id);
+    const row = document.createElement('div');
+    row.className = 'checklist-item route-list-item' + (passed ? ' found' : '');
+    row.innerHTML = `
+      <div class="cell-emoji">${passed ? '🚗' : '📍'}</div>
+      <div class="item-info">
+        <div class="item-label">${stop.name}</div>
+        <div class="item-fact">Mile ${stop.mile} of ${ROUTE_TOTAL_MILES}</div>
+      </div>
+      <div class="checkbox">${passed ? '✓' : ''}</div>
+    `;
+    row.addEventListener('click', () => toggleStopPassed(stop.id));
+    listEl.appendChild(row);
   });
 }
 
@@ -364,9 +429,6 @@ function openSettings() {
   populateRegionSelect(document.getElementById('s-region-select'));
   document.getElementById('s-trip-name').value = state.settings.tripName;
   document.getElementById('s-region-select').value = state.settings.region;
-  document.getElementById('s-origin-input').value = state.settings.origin || '';
-  document.getElementById('s-destination-input').value = state.settings.destination || '';
-  document.getElementById('s-maps-api-key').value = state.settings.mapsApiKey || '';
   document.getElementById('settings-modal').classList.remove('hidden');
 }
 
@@ -384,9 +446,6 @@ function initSettings() {
 
     state.settings.tripName = document.getElementById('s-trip-name').value.trim() || 'Road Trip';
     state.settings.region = newRegion;
-    state.settings.origin = document.getElementById('s-origin-input').value.trim();
-    state.settings.destination = document.getElementById('s-destination-input').value.trim();
-    state.settings.mapsApiKey = document.getElementById('s-maps-api-key').value.trim();
 
     if (regionChanged) {
       state.board = generateBingoBoard(newRegion);
@@ -410,6 +469,14 @@ function initSettings() {
     showApp();
   });
 
+  document.getElementById('reset-route-btn').addEventListener('click', () => {
+    if (!confirm('Reset your route progress? All checkpoints will be marked unpassed again.')) return;
+    state.routeProgress = { passed: [] };
+    saveState();
+    closeSettings();
+    renderRouteMap();
+  });
+
   document.getElementById('reset-trip-btn').addEventListener('click', () => {
     if (!confirm('Reset the entire trip? This clears everything and starts over.')) return;
     localStorage.removeItem(STORAGE_KEY);
@@ -425,7 +492,6 @@ function initSettings() {
 document.addEventListener('DOMContentLoaded', () => {
   initSetupScreen();
   initTabs();
-  initMapTab();
   initSettings();
 
   if (state && state.settings) {

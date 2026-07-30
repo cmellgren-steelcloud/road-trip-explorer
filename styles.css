@@ -84,33 +84,18 @@ label input, label select {
   background: white;
 }
 
-.row2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
 .region-desc {
   margin: -8px 0 14px;
   font-size: 0.85rem;
   color: #555;
 }
 
-.maps-key-details {
-  margin-bottom: 18px;
-  border: 2px dashed #bbb;
+.route-note {
+  background: #eaf7ff;
+  border: 2px dashed #4cc9f0;
   border-radius: 10px;
   padding: 10px 12px;
-}
-
-.maps-key-details summary {
-  cursor: pointer;
-  font-weight: 700;
-  font-size: 0.85rem;
-}
-
-.maps-key-details label {
-  margin-top: 10px;
+  margin-bottom: 18px;
 }
 
 .hint {
@@ -399,27 +384,109 @@ label input, label select {
   color: white;
 }
 
-/* ---------- Map ---------- */
-.map-block {
-  margin-bottom: 24px;
-}
-
-.map-block h3 { margin: 0 0 8px; }
-
-.map-frame {
-  width: 100%;
-  height: 260px;
-  border: 2px solid var(--border);
-  border-radius: 12px;
-}
-
-.map-placeholder {
-  background: white;
-  border: 2px dashed var(--border);
-  border-radius: 12px;
-  padding: 24px;
+/* ---------- Route map (hardcoded, no external map API) ---------- */
+.route-title {
+  margin: 0 0 10px;
   text-align: center;
 }
+
+.route-progress-wrap { padding: 0 0 6px; }
+
+.route-status {
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  margin: 0 0 14px;
+}
+
+.route-map-card {
+  background: white;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  margin-bottom: 18px;
+}
+
+.route-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.route-svg .land {
+  fill: #f4e9c9;
+  stroke: var(--border);
+  stroke-width: 3;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.route-svg .lake {
+  fill: #a9ddf3;
+  stroke: #2a6f97;
+  stroke-width: 1.5;
+}
+
+.route-svg .state-label {
+  fill: #9c8a55;
+  font-size: 16px;
+  font-weight: 800;
+  text-anchor: middle;
+}
+
+.route-segment {
+  stroke: #bbb;
+  stroke-width: 3;
+  stroke-dasharray: 6 6;
+  stroke-linecap: round;
+}
+
+.route-segment.traveled {
+  stroke: var(--grass);
+  stroke-width: 4;
+  stroke-dasharray: none;
+}
+
+.route-marker { cursor: pointer; }
+
+.route-marker circle {
+  fill: white;
+  stroke: var(--berry);
+  stroke-width: 2.5;
+}
+
+.route-marker.passed circle {
+  fill: var(--grass);
+  stroke: var(--border);
+}
+
+.route-marker .marker-check {
+  text-anchor: middle;
+  dominant-baseline: central;
+  fill: white;
+  font-size: 13px;
+  font-weight: 900;
+  pointer-events: none;
+}
+
+.route-marker .marker-label {
+  text-anchor: middle;
+  fill: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+  pointer-events: none;
+  paint-order: stroke;
+  stroke: white;
+  stroke-width: 3px;
+}
+
+.map-caption {
+  text-align: center;
+  margin: 8px 0 0;
+}
+
+.route-stop-list { padding-bottom: 10px; }
+.route-list-item { cursor: pointer; }
 
 /* ---------- Win banner ---------- */
 .win-banner {

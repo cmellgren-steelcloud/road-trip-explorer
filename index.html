@@ -26,27 +26,7 @@
     </label>
     <p class="region-desc" id="region-desc"></p>
 
-    <div class="row2">
-      <label>Starting from
-        <input type="text" id="origin-input" placeholder="e.g. Denver, CO">
-      </label>
-      <label>Heading to
-        <input type="text" id="destination-input" placeholder="e.g. Salt Lake City, UT">
-      </label>
-    </div>
-
-    <details class="maps-key-details">
-      <summary>Optional: add a Google Maps key to see your route &amp; live location</summary>
-      <label>Google Maps Embed API key
-        <input type="text" id="maps-api-key" placeholder="Paste your API key here">
-      </label>
-      <p class="hint">
-        Free to get, no billing account required. In the
-        <a href="https://console.cloud.google.com/google/maps-apis/credentials" target="_blank" rel="noopener">Google Cloud Console</a>,
-        create a project, enable the <strong>Maps Embed API</strong>, then create an API key.
-        You can skip this and just play the bingo/checklist game without a map.
-      </p>
-    </details>
+    <p class="hint route-note">🗺️ This trip's route is set: <strong>Kansas City, MO → Tawas City, MI</strong>, with checkpoints along the way in the Map tab.</p>
 
     <button id="start-trip-btn" class="primary-btn">Start the Trip! 🎉</button>
   </div>
@@ -90,24 +70,33 @@
 
   <!-- MAP TAB -->
   <div id="tab-map" class="tab-panel">
-    <div id="map-no-key" class="map-placeholder hidden">
-      <p>No Google Maps key set up yet.</p>
-      <button id="add-key-btn" class="primary-btn small">Add API key in Settings</button>
+    <h3 class="route-title">Kansas City, MO &rarr; Tawas City, MI</h3>
+
+    <div class="progress-wrap route-progress-wrap">
+      <div class="progress-bar"><div id="route-progress-fill" class="progress-fill route-fill"></div></div>
+      <span id="route-progress-label">0 / 920 miles</span>
+    </div>
+    <p id="route-status" class="route-status"></p>
+
+    <div class="route-map-card">
+      <svg id="route-map-svg" viewBox="0 0 900 550" class="route-svg" role="img" aria-label="Simplified map of the driving route from Kansas City to Tawas, Michigan">
+        <path class="land" d="M100,420 L85,370 L92,320 L78,275 L88,225 L78,175 L98,125 L140,95 L190,78 L260,70 L330,66 L400,64 L460,68 L520,66 L560,58 L600,45 L650,35 L700,50 L735,68 L760,78 L790,95 L820,120 L845,140 L815,155 L825,175 L790,195 L810,215 L780,225 L755,245 L735,275 L748,300 L725,320 L718,345 L742,355 L712,375 L705,400 L722,425 L735,460 L722,495 L705,515 L690,480 L672,450 L640,455 L590,452 L540,458 L495,466 L455,470 L410,478 L365,462 L335,432 L305,420 L260,412 L210,408 L160,412 L120,416 Z"/>
+        <ellipse class="lake" cx="545" cy="68" rx="48" ry="16"/>
+        <ellipse class="lake" cx="585" cy="122" rx="30" ry="58"/>
+        <ellipse class="lake" cx="716" cy="112" rx="33" ry="62"/>
+        <ellipse class="lake" cx="690" cy="205" rx="40" ry="13"/>
+        <text class="state-label" x="230" y="300">KS</text>
+        <text class="state-label" x="370" y="290">MO</text>
+        <text class="state-label" x="470" y="260">IL</text>
+        <text class="state-label" x="555" y="250">IN</text>
+        <text class="state-label" x="660" y="55">MI</text>
+        <g id="route-segments"></g>
+        <g id="route-markers"></g>
+      </svg>
+      <p class="hint map-caption">Not to scale — just for the fun of the drive! 🚗</p>
     </div>
 
-    <div id="map-content">
-      <div class="map-block">
-        <h3>Your Route</h3>
-        <iframe id="route-frame" class="map-frame" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-      </div>
-
-      <div class="map-block">
-        <h3>Where Am I Right Now?</h3>
-        <button id="locate-btn" class="primary-btn small">📍 Update My Location</button>
-        <p id="locate-status" class="hint"></p>
-        <iframe id="location-frame" class="map-frame hidden" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-      </div>
-    </div>
+    <div id="route-stop-list" class="route-stop-list"></div>
   </div>
 </section>
 
@@ -130,28 +119,19 @@
     <label>Scenery / region
       <select id="s-region-select"></select>
     </label>
-    <div class="row2">
-      <label>Starting from
-        <input type="text" id="s-origin-input">
-      </label>
-      <label>Heading to
-        <input type="text" id="s-destination-input">
-      </label>
-    </div>
-    <label>Google Maps Embed API key
-      <input type="text" id="s-maps-api-key" placeholder="Paste your API key here">
-    </label>
     <div class="modal-actions">
       <button id="settings-save-btn" class="primary-btn">Save</button>
       <button id="settings-cancel-btn" class="secondary-btn">Cancel</button>
     </div>
     <hr>
     <button id="new-board-btn" class="secondary-btn">🎲 Shuffle a New Board</button>
+    <button id="reset-route-btn" class="secondary-btn">🧭 Reset Route Progress</button>
     <button id="reset-trip-btn" class="danger-btn">🗑️ Reset Entire Trip</button>
   </div>
 </div>
 
 <script src="items.js"></script>
+<script src="route.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
