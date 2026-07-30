@@ -384,10 +384,63 @@ label input, label select {
   color: white;
 }
 
+/* ---------- Route picker (setup screen & settings modal) ---------- */
+.route-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.route-card {
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: white;
+  cursor: pointer;
+}
+
+.route-card.selected {
+  background: var(--sunny);
+  box-shadow: var(--shadow);
+}
+
+.route-card-name {
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.route-card-via {
+  font-size: 0.78rem;
+  color: #555;
+  margin-top: 2px;
+}
+
+.route-card-miles {
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
 /* ---------- Route map (hardcoded, no external map API) ---------- */
 .route-title {
-  margin: 0 0 10px;
+  margin: 0 0 4px;
   text-align: center;
+}
+
+.route-subtitle {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #555;
+  margin: 0 0 10px;
+}
+
+.small-btn {
+  display: block;
+  margin: 0 auto 14px;
+  width: auto;
+  padding: 8px 16px;
+  font-size: 0.85rem;
 }
 
 .route-progress-wrap { padding: 0 0 6px; }
@@ -460,6 +513,17 @@ label input, label select {
   stroke: var(--border);
 }
 
+.route-marker.milestone circle {
+  fill: var(--sunny);
+  stroke: var(--plum);
+  stroke-width: 3;
+}
+
+.route-marker.milestone.passed circle {
+  fill: var(--grass);
+  stroke: var(--border);
+}
+
 .route-marker .marker-check {
   text-anchor: middle;
   dominant-baseline: central;
@@ -478,6 +542,11 @@ label input, label select {
   paint-order: stroke;
   stroke: white;
   stroke-width: 3px;
+}
+
+.route-marker .marker-label.milestone-label {
+  font-size: 12px;
+  fill: var(--plum);
 }
 
 .map-caption {

@@ -35,25 +35,37 @@ API, so it works fully offline once loaded (and re-visited once so the browser c
   younger kids can rack up easy 1-pointers while older kids hunt for rare finds.
 - **Progress saves locally** in the browser (`localStorage`) on that device only, so it
   survives refreshes/closing the tab but doesn't sync across devices.
-- **Map tab**: a stylized, hand-drawn (not geographically precise) SVG map of the
-  Kansas City → Tawas City route, with a marker for each major city along the way.
-  Tap a city (on the map or in the list below it) when you actually drive past it —
-  the route line fills in green up to that point and the progress bar updates in miles.
+- **Map tab**: a stylized, hand-drawn (not geographically precise), zoomed-in SVG map
+  covering just the Kansas City–to–Michigan region, with a marker for each major city
+  along the way. Tap a city (on the map or in the list below it) when you actually drive
+  past it — the route line fills in green up to that point and the progress bar updates
+  in miles.
+- **Three route options** — pick one on the setup screen (or switch later via **⚙️ Settings**
+  or the **🔀 Change Route** button on the Map tab):
+  - **Route A**: via St. Louis, Indianapolis & Fort Wayne (920 mi)
+  - **Route B**: via Des Moines & Chicago (895 mi)
+  - **Route C**: via Springfield & Joliet (945 mi)
 
-## Customizing the route
+  Routes B and C both swing through **The Original Rainbow Cone** in New Buffalo, MI —
+  shown as a special gold milestone marker (🍦) on the map. Switching routes resets that
+  route's checkpoint progress.
 
-Edit `route.js` — `ROUTE_STOPS` is an ordered array of checkpoints:
+## Customizing the routes
 
-```js
-{ id: 'st-louis', name: 'St. Louis, MO', x: 420, y: 230, mile: 250 }
-```
+Edit `route.js`:
 
-`x`/`y` are hand-placed pixel coordinates on the map's `0 0 900 550` SVG canvas (not a
-real map projection — just enough to look right), and `mile` is the approximate
-cumulative driving distance from the start, used for the progress bar and for deciding
-which route segments show as "traveled." To change the trip, edit the stops (and the
-static map background/lakes in `index.html`'s `#route-map-svg` if the new route needs
-different geography shown).
+- `CITIES` is a lookup of every stop used by any route: `{ name, x, y }` (plus optional
+  `subtitle`, `milestone: true`, `emoji`, and `shortLabel` for special stops like the
+  Rainbow Cone). `x`/`y` are hand-placed pixel coordinates on the map's `0 0 870 560` SVG
+  canvas (not a real map projection — just enough to look right).
+- `ROUTES` is the list of selectable routes, each an ordered array of `{ city, mile }`
+  stops referencing `CITIES` by id. `mile` is the approximate cumulative driving distance
+  for that specific route, used for the progress bar and for deciding which route segments
+  show as "traveled."
+
+To add or change a route, add/edit entries in `CITIES` and `ROUTES`. If a new route needs
+geography outside the current map's bounds, also adjust the static land/lake shapes in
+`index.html`'s `#route-map-svg`.
 
 ## Customizing the item pool
 

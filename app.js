@@ -91,10 +91,32 @@ function populateRegionSelect(selectEl) {
   });
 }
 
+function renderRoutePicker(container, selectedId) {
+  container.innerHTML = '';
+  container.dataset.selectedRoute = selectedId;
+  ROUTES.forEach(route => {
+    const totalMiles = route.stops[route.stops.length - 1].mile;
+    const card = document.createElement('div');
+    card.className = 'route-card' + (route.id === selectedId ? ' selected' : '');
+    card.innerHTML = `
+      <div class="route-card-name">${route.name}</div>
+      <div class="route-card-via">${route.via}</div>
+      <div class="route-card-miles">${totalMiles} miles</div>
+    `;
+    card.addEventListener('click', () => {
+      container.querySelectorAll('.route-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      container.dataset.selectedRoute = route.id;
+    });
+    container.appendChild(card);
+  });
+}
+
 function initSetupScreen() {
   const regionSelect = document.getElementById('region-select');
   const regionDesc = document.getElementById('region-desc');
   populateRegionSelect(regionSelect);
+  renderRoutePicker(document.getElementById('setup-route-picker'), DEFAULT_ROUTE_ID);
 
   function updateDesc() {
     const r = REGIONS.find(r => r.id === regionSelect.value);
@@ -106,9 +128,10 @@ function initSetupScreen() {
   document.getElementById('start-trip-btn').addEventListener('click', () => {
     const tripName = document.getElementById('trip-name').value.trim() || 'Road Trip';
     const region = regionSelect.value;
+    const routeId = document.getElementById('setup-route-picker').dataset.selectedRoute || DEFAULT_ROUTE_ID;
 
     state = {
-      settings: { tripName, region },
+      settings: { tripName, region, routeId },
       board: generateBingoBoard(region),
       found: [],
       routeProgress: { passed: [] },
@@ -124,6 +147,7 @@ let currentView = 'bingo';
 
 function showApp() {
   if (!state.routeProgress) state.routeProgress = { passed: [] };
+  if (!state.settings.routeId) state.settings.routeId = DEFAULT_ROUTE_ID;
   document.getElementById('setup-screen').classList.add('hidden');
   document.getElementById('app-screen').classList.remove('hidden');
   document.getElementById('header-trip-name').textContent = state.settings.tripName;
@@ -297,6 +321,8 @@ function initTabs() {
     document.getElementById('bingo-view').classList.add('hidden');
   });
 
+  document.getElementById('change-route-btn').addEventListener('click', openSettings);
+
   document.getElementById('win-close-btn').addEventListener('click', () => {
     document.getElementById('win-banner').classList.add('hidden');
   });
@@ -306,41 +332,56 @@ function initTabs() {
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
-function maxPassedMile() {
+function currentRoute() {
+  return getRoute(state.settings.routeId);
+}
+
+function routeStopsWithCoords(route) {
+  return route.stops.map(s => Object.assign({ mile: s.mile, cityId: s.city }, CITIES[s.city]));
+}
+
+function maxPassedMile(route) {
   const passed = state.routeProgress.passed;
   let max = 0;
-  ROUTE_STOPS.forEach(stop => {
-    if (passed.includes(stop.id) && stop.mile > max) max = stop.mile;
+  route.stops.forEach(stop => {
+    if (passed.includes(stop.city) && stop.mile > max) max = stop.mile;
   });
   return max;
 }
 
-function nextStop() {
-  const currentMax = maxPassedMile();
-  return ROUTE_STOPS.find(stop => stop.mile > currentMax) || null;
+function nextStop(route, currentMax) {
+  return route.stops.find(stop => stop.mile > currentMax) || null;
 }
 
-function toggleStopPassed(stopId) {
+function toggleStopPassed(cityId) {
   const passed = state.routeProgress.passed;
-  const idx = passed.indexOf(stopId);
+  const idx = passed.indexOf(cityId);
   if (idx >= 0) passed.splice(idx, 1);
-  else passed.push(stopId);
+  else passed.push(cityId);
   saveState();
   renderRouteMap();
 }
 
 function renderRouteMap() {
+  const route = currentRoute();
+  const stops = routeStopsWithCoords(route);
+  const totalMiles = route.stops[route.stops.length - 1].mile;
+
+  document.getElementById('route-title').textContent =
+    `${stops[0].name} → ${stops[stops.length - 1].name}`;
+  document.getElementById('route-subtitle').textContent = `${route.name.replace(/^\S+\s/, '')} — ${route.via}`;
+
   const segmentsG = document.getElementById('route-segments');
   const markersG = document.getElementById('route-markers');
   segmentsG.innerHTML = '';
   markersG.innerHTML = '';
 
-  const currentMax = maxPassedMile();
+  const currentMax = maxPassedMile(route);
 
   // Segments between consecutive stops
-  for (let i = 0; i < ROUTE_STOPS.length - 1; i++) {
-    const a = ROUTE_STOPS[i];
-    const b = ROUTE_STOPS[i + 1];
+  for (let i = 0; i < stops.length - 1; i++) {
+    const a = stops[i];
+    const b = stops[i + 1];
     const traveled = b.mile <= currentMax;
     const line = document.createElementNS(SVG_NS, 'line');
     line.setAttribute('x1', a.x);
@@ -352,10 +393,10 @@ function renderRouteMap() {
   }
 
   // City markers
-  ROUTE_STOPS.forEach(stop => {
-    const passed = state.routeProgress.passed.includes(stop.id);
+  stops.forEach(stop => {
+    const passed = state.routeProgress.passed.includes(stop.cityId);
     const g = document.createElementNS(SVG_NS, 'g');
-    g.setAttribute('class', 'route-marker' + (passed ? ' passed' : ''));
+    g.setAttribute('class', 'route-marker' + (passed ? ' passed' : '') + (stop.milestone ? ' milestone' : ''));
     g.setAttribute('tabindex', '0');
     g.setAttribute('role', 'button');
     g.setAttribute('aria-label', stop.name + (passed ? ' (passed)' : ''));
@@ -363,62 +404,61 @@ function renderRouteMap() {
     const circle = document.createElementNS(SVG_NS, 'circle');
     circle.setAttribute('cx', stop.x);
     circle.setAttribute('cy', stop.y);
-    circle.setAttribute('r', 11);
+    circle.setAttribute('r', stop.milestone ? 13 : 11);
     g.appendChild(circle);
 
-    if (passed) {
-      const check = document.createElementNS(SVG_NS, 'text');
-      check.setAttribute('x', stop.x);
-      check.setAttribute('y', stop.y);
-      check.setAttribute('class', 'marker-check');
-      check.textContent = '✓';
-      g.appendChild(check);
-    }
+    const glyph = document.createElementNS(SVG_NS, 'text');
+    glyph.setAttribute('x', stop.x);
+    glyph.setAttribute('y', stop.y);
+    glyph.setAttribute('class', 'marker-check');
+    glyph.textContent = passed ? '✓' : (stop.milestone ? stop.emoji : '');
+    if (glyph.textContent) g.appendChild(glyph);
 
     const label = document.createElementNS(SVG_NS, 'text');
     label.setAttribute('x', stop.x);
-    label.setAttribute('y', stop.y - 16);
-    label.setAttribute('class', 'marker-label');
-    label.textContent = stop.name.split(',')[0];
+    label.setAttribute('y', stop.y - (stop.milestone ? 18 : 16));
+    label.setAttribute('class', 'marker-label' + (stop.milestone ? ' milestone-label' : ''));
+    label.textContent = stop.milestone ? (stop.shortLabel || stop.name) : stop.name.split(',')[0];
     g.appendChild(label);
 
-    g.addEventListener('click', () => toggleStopPassed(stop.id));
+    g.addEventListener('click', () => toggleStopPassed(stop.cityId));
     g.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleStopPassed(stop.id); }
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleStopPassed(stop.cityId); }
     });
     markersG.appendChild(g);
   });
 
   // Progress bar + status text
-  const pct = Math.round((currentMax / ROUTE_TOTAL_MILES) * 100);
+  const pct = Math.round((currentMax / totalMiles) * 100);
   document.getElementById('route-progress-fill').style.width = pct + '%';
-  document.getElementById('route-progress-label').textContent = `${currentMax} / ${ROUTE_TOTAL_MILES} miles`;
+  document.getElementById('route-progress-label').textContent = `${currentMax} / ${totalMiles} miles`;
 
-  const upcoming = nextStop();
+  const upcoming = nextStop(route, currentMax);
   const statusEl = document.getElementById('route-status');
   if (!upcoming) {
     statusEl.textContent = "🏁 You made it to Tawas City! Trip complete!";
   } else {
     const milesToGo = upcoming.mile - currentMax;
-    statusEl.textContent = `Next stop: ${upcoming.name} (about ${milesToGo} miles to go)`;
+    const upcomingCity = CITIES[upcoming.city];
+    statusEl.textContent = `Next stop: ${upcomingCity.name} (about ${milesToGo} miles to go)`;
   }
 
   // Tap-friendly list beneath the map
   const listEl = document.getElementById('route-stop-list');
   listEl.innerHTML = '';
-  ROUTE_STOPS.forEach(stop => {
-    const passed = state.routeProgress.passed.includes(stop.id);
+  stops.forEach(stop => {
+    const passed = state.routeProgress.passed.includes(stop.cityId);
     const row = document.createElement('div');
     row.className = 'checklist-item route-list-item' + (passed ? ' found' : '');
     row.innerHTML = `
-      <div class="cell-emoji">${passed ? '🚗' : '📍'}</div>
+      <div class="cell-emoji">${passed ? '🚗' : (stop.milestone ? stop.emoji : '📍')}</div>
       <div class="item-info">
         <div class="item-label">${stop.name}</div>
-        <div class="item-fact">Mile ${stop.mile} of ${ROUTE_TOTAL_MILES}</div>
+        <div class="item-fact">${stop.subtitle ? stop.subtitle + ' — ' : ''}Mile ${stop.mile} of ${totalMiles}</div>
       </div>
       <div class="checkbox">${passed ? '✓' : ''}</div>
     `;
-    row.addEventListener('click', () => toggleStopPassed(stop.id));
+    row.addEventListener('click', () => toggleStopPassed(stop.cityId));
     listEl.appendChild(row);
   });
 }
@@ -429,6 +469,7 @@ function openSettings() {
   populateRegionSelect(document.getElementById('s-region-select'));
   document.getElementById('s-trip-name').value = state.settings.tripName;
   document.getElementById('s-region-select').value = state.settings.region;
+  renderRoutePicker(document.getElementById('s-route-picker'), state.settings.routeId);
   document.getElementById('settings-modal').classList.remove('hidden');
 }
 
@@ -443,15 +484,21 @@ function initSettings() {
   document.getElementById('settings-save-btn').addEventListener('click', () => {
     const newRegion = document.getElementById('s-region-select').value;
     const regionChanged = newRegion !== state.settings.region;
+    const newRouteId = document.getElementById('s-route-picker').dataset.selectedRoute || state.settings.routeId;
+    const routeChanged = newRouteId !== state.settings.routeId;
 
     state.settings.tripName = document.getElementById('s-trip-name').value.trim() || 'Road Trip';
     state.settings.region = newRegion;
+    state.settings.routeId = newRouteId;
 
     if (regionChanged) {
       state.board = generateBingoBoard(newRegion);
       state.found = [];
       state.bingoShown = false;
       state.blackoutShown = false;
+    }
+    if (routeChanged) {
+      state.routeProgress = { passed: [] };
     }
     saveState();
     closeSettings();

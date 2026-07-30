@@ -26,7 +26,8 @@
     </label>
     <p class="region-desc" id="region-desc"></p>
 
-    <p class="hint route-note">🗺️ This trip's route is set: <strong>Kansas City, MO → Tawas City, MI</strong>, with checkpoints along the way in the Map tab.</p>
+    <label>Which way are you driving? (Kansas City, MO &rarr; Tawas City, MI)</label>
+    <div class="route-picker" id="setup-route-picker"></div>
 
     <button id="start-trip-btn" class="primary-btn">Start the Trip! 🎉</button>
   </div>
@@ -70,7 +71,9 @@
 
   <!-- MAP TAB -->
   <div id="tab-map" class="tab-panel">
-    <h3 class="route-title">Kansas City, MO &rarr; Tawas City, MI</h3>
+    <h3 class="route-title" id="route-title">Kansas City, MO &rarr; Tawas City, MI</h3>
+    <p class="route-subtitle" id="route-subtitle"></p>
+    <button id="change-route-btn" class="secondary-btn small-btn">🔀 Change Route</button>
 
     <div class="progress-wrap route-progress-wrap">
       <div class="progress-bar"><div id="route-progress-fill" class="progress-fill route-fill"></div></div>
@@ -79,17 +82,18 @@
     <p id="route-status" class="route-status"></p>
 
     <div class="route-map-card">
-      <svg id="route-map-svg" viewBox="0 0 900 550" class="route-svg" role="img" aria-label="Simplified map of the driving route from Kansas City to Tawas, Michigan">
-        <path class="land" d="M100,420 L85,370 L92,320 L78,275 L88,225 L78,175 L98,125 L140,95 L190,78 L260,70 L330,66 L400,64 L460,68 L520,66 L560,58 L600,45 L650,35 L700,50 L735,68 L760,78 L790,95 L820,120 L845,140 L815,155 L825,175 L790,195 L810,215 L780,225 L755,245 L735,275 L748,300 L725,320 L718,345 L742,355 L712,375 L705,400 L722,425 L735,460 L722,495 L705,515 L690,480 L672,450 L640,455 L590,452 L540,458 L495,466 L455,470 L410,478 L365,462 L335,432 L305,420 L260,412 L210,408 L160,412 L120,416 Z"/>
-        <ellipse class="lake" cx="545" cy="68" rx="48" ry="16"/>
-        <ellipse class="lake" cx="585" cy="122" rx="30" ry="58"/>
-        <ellipse class="lake" cx="716" cy="112" rx="33" ry="62"/>
-        <ellipse class="lake" cx="690" cy="205" rx="40" ry="13"/>
-        <text class="state-label" x="230" y="300">KS</text>
-        <text class="state-label" x="370" y="290">MO</text>
-        <text class="state-label" x="470" y="260">IL</text>
-        <text class="state-label" x="555" y="250">IN</text>
-        <text class="state-label" x="660" y="55">MI</text>
+      <svg id="route-map-svg" viewBox="0 0 870 560" class="route-svg" role="img" aria-label="Simplified map of the driving route from Kansas City to Tawas, Michigan">
+        <path class="land" d="M10,530 L60,545 L150,548 L250,542 L340,548 L420,532 L480,522 L560,516 L620,502 L680,492 L720,472 L742,442 L760,400 L782,352 L798,300 L810,248 L822,196 L825,150 L818,100 L800,25 L750,8 L700,4 L650,12 L600,26 L560,15 L500,8 L450,12 L380,20 L320,16 L260,28 L200,44 L150,60 L100,80 L70,150 L55,220 L42,300 L32,380 L18,460 Z"/>
+        <ellipse class="lake" cx="630" cy="15" rx="90" ry="12"/>
+        <ellipse class="lake" cx="545" cy="60" rx="55" ry="150"/>
+        <ellipse class="lake" cx="815" cy="90" rx="40" ry="130"/>
+        <ellipse class="lake" cx="790" cy="420" rx="32" ry="85"/>
+        <text class="state-label" x="140" y="380">IA</text>
+        <text class="state-label" x="70" y="450">KS</text>
+        <text class="state-label" x="230" y="480">MO</text>
+        <text class="state-label" x="430" y="350">IL</text>
+        <text class="state-label" x="660" y="380">IN</text>
+        <text class="state-label" x="600" y="290">MI</text>
         <g id="route-segments"></g>
         <g id="route-markers"></g>
       </svg>
@@ -119,6 +123,9 @@
     <label>Scenery / region
       <select id="s-region-select"></select>
     </label>
+    <label>Driving route
+      <div class="route-picker" id="s-route-picker"></div>
+    </label>
     <div class="modal-actions">
       <button id="settings-save-btn" class="primary-btn">Save</button>
       <button id="settings-cancel-btn" class="secondary-btn">Cancel</button>
@@ -130,8 +137,8 @@
   </div>
 </div>
 
-<script src="items.js?v=2"></script>
-<script src="route.js?v=2"></script>
-<script src="app.js?v=2"></script>
+<script src="items.js?v=3"></script>
+<script src="route.js?v=3"></script>
+<script src="app.js?v=3"></script>
 </body>
 </html>
