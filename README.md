@@ -39,8 +39,12 @@ API, so it works fully offline once loaded (and re-visited once so the browser c
   every part of the app, including the plates game below. There's no backend, so nothing
   is shared between different phones/devices.
 - **Plates tab**: the classic road-trip license plate game — tap a state when you spot
-  its plate. Includes all 50 states plus Washington, D.C. as a bonus 51st plate. Has its
-  own progress bar and a "Clear Plate Board" reset button in the tab.
+  its plate. Includes all 50 states, plus a separate "Bonus Plates" section below for
+  rarer finds: Washington D.C., the 10 Canadian provinces, Mexico, Puerto Rico, U.S.
+  Government plates, and Native Nation plates. Has its own progress bar, persists exactly
+  like everything else in the app (survives refreshes, closed tabs, and coming back days
+  later — see the persistence note above), and a "Clear Plate Board" button that can be
+  undone for a few seconds afterward in case of a stray tap.
 - **Map tab**: a stylized, hand-drawn (not geographically precise), zoomed-in SVG map
   covering just the Kansas City–to–Michigan region, with a marker for each major city
   along the way. Tap a city (on the map or in the list below it) when you actually drive

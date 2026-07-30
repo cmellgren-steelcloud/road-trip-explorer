@@ -1,4 +1,5 @@
-// State license plate spotting game — all 50 US states, plus DC as a bonus 51st plate.
+// State license plate spotting game — the 50 US states, plus a separate bonus section
+// for rarer finds (DC, Canadian provinces, Mexico, and a few other plate types).
 // Per-device only (localStorage), same as the rest of the app.
 
 const STATES = [
@@ -52,5 +53,31 @@ const STATES = [
   { code: 'WV', name: 'West Virginia' },
   { code: 'WI', name: 'Wisconsin' },
   { code: 'WY', name: 'Wyoming' },
-  { code: 'DC', name: 'Washington, D.C.', bonus: true },
+];
+
+// Rarer finds, shown in their own section below the 50 states.
+const BONUS_PLATES = [
+  { code: 'DC', name: 'Washington, D.C.', group: 'us' },
+
+  { code: 'ON', name: 'Ontario', group: 'canada' },
+  { code: 'QC', name: 'Quebec', group: 'canada' },
+  { code: 'BC', name: 'British Columbia', group: 'canada' },
+  { code: 'AB', name: 'Alberta', group: 'canada' },
+  { code: 'MB', name: 'Manitoba', group: 'canada' },
+  { code: 'SK', name: 'Saskatchewan', group: 'canada' },
+  { code: 'NS', name: 'Nova Scotia', group: 'canada' },
+  { code: 'NB', name: 'New Brunswick', group: 'canada' },
+  { code: 'NL', name: 'Newfoundland & Labrador', group: 'canada' },
+  { code: 'PE', name: 'Prince Edward Island', group: 'canada' },
+
+  { code: 'MX', name: 'Mexico', group: 'other' },
+  { code: 'PR', name: 'Puerto Rico', group: 'other' },
+  { code: 'GOV', name: 'U.S. Government plate', group: 'other' },
+  { code: 'TRB', name: 'Native Nation plate', group: 'other' },
+];
+
+const BONUS_GROUPS = [
+  { id: 'us', label: '🇺🇸 United States' },
+  { id: 'canada', label: '🇨🇦 Canadian Provinces' },
+  { id: 'other', label: '🌎 Other Finds' },
 ];

@@ -573,14 +573,14 @@ label input, label select {
 
 .plates-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
   margin: 14px 0 18px;
 }
 
 .plate-cell {
   position: relative;
-  aspect-ratio: 2 / 1;
+  min-height: 66px;
   border: 3px solid var(--border);
   border-radius: 8px;
   background: white;
@@ -590,20 +590,21 @@ label input, label select {
   justify-content: center;
   cursor: pointer;
   text-align: center;
-  padding: 2px 4px;
-}
-
-.plate-cell .plate-code {
-  font-size: 1.15rem;
-  font-weight: 800;
-  line-height: 1.1;
+  padding: 6px 6px;
 }
 
 .plate-cell .plate-name {
-  font-size: 0.55rem;
-  font-weight: 600;
-  color: #666;
-  line-height: 1.1;
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.plate-cell .plate-code {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #777;
+  letter-spacing: 0.5px;
+  margin-top: 3px;
 }
 
 .plate-cell.found {
@@ -611,7 +612,7 @@ label input, label select {
   color: white;
 }
 
-.plate-cell.found .plate-name { color: white; }
+.plate-cell.found .plate-code { color: white; }
 
 .plate-cell.bonus {
   border-style: dashed;
@@ -620,20 +621,43 @@ label input, label select {
 
 .plate-cell.bonus.found { border-color: var(--border); }
 
-.plate-bonus-tag {
-  position: absolute;
-  top: 2px;
-  right: 4px;
-  font-size: 0.5rem;
-  font-weight: 800;
-  color: var(--plum);
-  text-transform: uppercase;
+.bonus-heading {
+  margin: 6px 0 2px;
+  font-size: 1rem;
 }
 
-.plate-cell.found .plate-bonus-tag { color: white; }
+.bonus-heading span {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #666;
+}
 
-@media (min-width: 500px) {
-  .plates-grid { grid-template-columns: repeat(5, 1fr); }
+.bonus-caption {
+  margin: 0 0 10px;
+}
+
+.bonus-group-label {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--plum);
+  margin: 12px 0 6px;
+}
+
+.bonus-plates-grid { margin: 0 0 4px; }
+
+.plates-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.plates-actions .secondary-btn { margin-top: 0; }
+
+@media (min-width: 420px) {
+  .plates-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (min-width: 600px) {
+  .plates-grid { grid-template-columns: repeat(4, 1fr); }
 }
 
 /* ---------- Win banner ---------- */

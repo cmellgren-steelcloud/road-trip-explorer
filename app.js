@@ -467,6 +467,12 @@ function renderRouteMap() {
 }
 
 // ---------------- License plate game (per-device only) ----------------
+// Progress persists via localStorage (see saveState/loadState above), which has no
+// expiry — it survives refreshes, closing the tab, and coming back days later, unless
+// the browser's site data is manually cleared.
+
+let plateClearBackup = null;
+let plateUndoTimer = null;
 
 function togglePlate(code) {
   const idx = state.platesFound.indexOf(code);
@@ -476,39 +482,75 @@ function togglePlate(code) {
   renderPlates();
 }
 
+function makePlateCell(item, found) {
+  const cell = document.createElement('div');
+  cell.className = 'plate-cell' + (found ? ' found' : '') + (item.group ? ' bonus' : '');
+  cell.innerHTML = `
+    <div class="plate-name">${item.name}</div>
+    <div class="plate-code">${item.code}</div>
+  `;
+  cell.addEventListener('click', () => togglePlate(item.code));
+  return cell;
+}
+
 function renderPlates() {
   const grid = document.getElementById('plates-grid');
   grid.innerHTML = '';
+  STATES.forEach(s => grid.appendChild(makePlateCell(s, state.platesFound.includes(s.code))));
 
-  STATES.forEach(s => {
-    const found = state.platesFound.includes(s.code);
-    const cell = document.createElement('div');
-    cell.className = 'plate-cell' + (found ? ' found' : '') + (s.bonus ? ' bonus' : '');
-    cell.innerHTML = `
-      ${s.bonus ? '<span class="plate-bonus-tag">bonus</span>' : ''}
-      <div class="plate-code">${s.code}</div>
-      <div class="plate-name">${s.name}</div>
-    `;
-    cell.addEventListener('click', () => togglePlate(s.code));
-    grid.appendChild(cell);
+  const statesFound = state.platesFound.filter(code => STATES.some(s => s.code === code)).length;
+  const pct = Math.round((statesFound / STATES.length) * 100);
+  document.getElementById('plates-progress-fill').style.width = pct + '%';
+  document.getElementById('plates-progress-label').textContent = `${statesFound} / ${STATES.length} states spotted`;
+
+  const bonusContainer = document.getElementById('bonus-grid-container');
+  bonusContainer.innerHTML = '';
+  BONUS_GROUPS.forEach(group => {
+    const items = BONUS_PLATES.filter(p => p.group === group.id);
+    if (!items.length) return;
+    const heading = document.createElement('div');
+    heading.className = 'bonus-group-label';
+    heading.textContent = group.label;
+    bonusContainer.appendChild(heading);
+
+    const subGrid = document.createElement('div');
+    subGrid.className = 'plates-grid bonus-plates-grid';
+    items.forEach(p => subGrid.appendChild(makePlateCell(p, state.platesFound.includes(p.code))));
+    bonusContainer.appendChild(subGrid);
   });
 
-  const requiredTotal = STATES.filter(s => !s.bonus).length;
-  const requiredFound = state.platesFound.filter(code => !STATES.find(s => s.code === code).bonus).length;
-  const gotBonus = state.platesFound.includes('DC');
+  const bonusFound = state.platesFound.filter(code => BONUS_PLATES.some(p => p.code === code)).length;
+  document.getElementById('bonus-progress-label').textContent = `(${bonusFound} / ${BONUS_PLATES.length})`;
+}
 
-  const pct = Math.round((requiredFound / requiredTotal) * 100);
-  document.getElementById('plates-progress-fill').style.width = pct + '%';
-  document.getElementById('plates-progress-label').textContent =
-    `${requiredFound} / ${requiredTotal} states spotted` + (gotBonus ? ' + DC bonus! 🎉' : '');
+function showUndoClearButton() {
+  const btn = document.getElementById('undo-clear-plates-btn');
+  btn.classList.remove('hidden');
+  clearTimeout(plateUndoTimer);
+  plateUndoTimer = setTimeout(() => {
+    btn.classList.add('hidden');
+    plateClearBackup = null;
+  }, 10000);
 }
 
 function initPlates() {
   document.getElementById('reset-plates-btn').addEventListener('click', () => {
-    if (!confirm('Clear the whole plate board? All spotted states will be marked unspotted again.')) return;
+    if (!confirm('Clear the whole plate board? All spotted plates will be marked unspotted again. (You can undo this for a few seconds after.)')) return;
+    plateClearBackup = state.platesFound.slice();
     state.platesFound = [];
     saveState();
     renderPlates();
+    showUndoClearButton();
+  });
+
+  document.getElementById('undo-clear-plates-btn').addEventListener('click', () => {
+    if (!plateClearBackup) return;
+    state.platesFound = plateClearBackup;
+    plateClearBackup = null;
+    clearTimeout(plateUndoTimer);
+    saveState();
+    renderPlates();
+    document.getElementById('undo-clear-plates-btn').classList.add('hidden');
   });
 }
 
