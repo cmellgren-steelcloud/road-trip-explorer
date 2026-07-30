@@ -135,6 +135,7 @@ function initSetupScreen() {
       board: generateBingoBoard(region),
       found: [],
       routeProgress: { passed: [] },
+      platesFound: [],
     };
     saveState();
     showApp();
@@ -148,6 +149,7 @@ let currentView = 'bingo';
 function showApp() {
   if (!state.routeProgress) state.routeProgress = { passed: [] };
   if (!state.settings.routeId) state.settings.routeId = DEFAULT_ROUTE_ID;
+  if (!state.platesFound) state.platesFound = [];
   document.getElementById('setup-screen').classList.add('hidden');
   document.getElementById('app-screen').classList.remove('hidden');
   document.getElementById('header-trip-name').textContent = state.settings.tripName;
@@ -157,6 +159,7 @@ function showApp() {
   renderChecklist();
   updateProgress();
   renderRouteMap();
+  renderPlates();
 }
 
 function isFound(itemId) {
@@ -463,6 +466,52 @@ function renderRouteMap() {
   });
 }
 
+// ---------------- License plate game (per-device only) ----------------
+
+function togglePlate(code) {
+  const idx = state.platesFound.indexOf(code);
+  if (idx >= 0) state.platesFound.splice(idx, 1);
+  else state.platesFound.push(code);
+  saveState();
+  renderPlates();
+}
+
+function renderPlates() {
+  const grid = document.getElementById('plates-grid');
+  grid.innerHTML = '';
+
+  STATES.forEach(s => {
+    const found = state.platesFound.includes(s.code);
+    const cell = document.createElement('div');
+    cell.className = 'plate-cell' + (found ? ' found' : '') + (s.bonus ? ' bonus' : '');
+    cell.innerHTML = `
+      ${s.bonus ? '<span class="plate-bonus-tag">bonus</span>' : ''}
+      <div class="plate-code">${s.code}</div>
+      <div class="plate-name">${s.name}</div>
+    `;
+    cell.addEventListener('click', () => togglePlate(s.code));
+    grid.appendChild(cell);
+  });
+
+  const requiredTotal = STATES.filter(s => !s.bonus).length;
+  const requiredFound = state.platesFound.filter(code => !STATES.find(s => s.code === code).bonus).length;
+  const gotBonus = state.platesFound.includes('DC');
+
+  const pct = Math.round((requiredFound / requiredTotal) * 100);
+  document.getElementById('plates-progress-fill').style.width = pct + '%';
+  document.getElementById('plates-progress-label').textContent =
+    `${requiredFound} / ${requiredTotal} states spotted` + (gotBonus ? ' + DC bonus! 🎉' : '');
+}
+
+function initPlates() {
+  document.getElementById('reset-plates-btn').addEventListener('click', () => {
+    if (!confirm('Clear the whole plate board? All spotted states will be marked unspotted again.')) return;
+    state.platesFound = [];
+    saveState();
+    renderPlates();
+  });
+}
+
 // ---------------- Settings modal ----------------
 
 function openSettings() {
@@ -540,6 +589,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initSetupScreen();
   initTabs();
   initSettings();
+  initPlates();
 
   if (state && state.settings) {
     showApp();

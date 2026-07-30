@@ -1,8 +1,9 @@
 # Road Trip Explorer
 
 A kid-friendly road trip scavenger hunt: a toggleable bingo card / checklist of things
-to spot, plus a hardcoded (no API key, no external service) map of the drive from
-Kansas City, MO to Tawas City, MI with tappable city checkpoints and a mileage progress bar.
+to spot, a hardcoded (no API key, no external service) map of the drive from
+Kansas City, MO to Tawas City, MI with tappable city checkpoints and a mileage progress bar,
+and a 50-state license plate spotting game.
 
 ## Running it
 
@@ -34,7 +35,12 @@ API, so it works fully offline once loaded (and re-visited once so the browser c
 - **Points**: 1 = common, 3 = uncommon, 5 = rare/bonus — good for mixed-age groups since
   younger kids can rack up easy 1-pointers while older kids hunt for rare finds.
 - **Progress saves locally** in the browser (`localStorage`) on that device only, so it
-  survives refreshes/closing the tab but doesn't sync across devices.
+  survives refreshes/closing the tab but doesn't sync across devices — this applies to
+  every part of the app, including the plates game below. There's no backend, so nothing
+  is shared between different phones/devices.
+- **Plates tab**: the classic road-trip license plate game — tap a state when you spot
+  its plate. Includes all 50 states plus Washington, D.C. as a bonus 51st plate. Has its
+  own progress bar and a "Clear Plate Board" reset button in the tab.
 - **Map tab**: a stylized, hand-drawn (not geographically precise), zoomed-in SVG map
   covering just the Kansas City–to–Michigan region, with a marker for each major city
   along the way. Tap a city (on the map or in the list below it) when you actually drive
@@ -66,6 +72,18 @@ Edit `route.js`:
 To add or change a route, add/edit entries in `CITIES` and `ROUTES`. If a new route needs
 geography outside the current map's bounds, also adjust the static land/lake shapes in
 `index.html`'s `#route-map-svg`.
+
+## Wanting the license plate board to sync across devices
+
+Right now it's per-device only (`localStorage`), same as everything else in the app.
+Making it genuinely global — where one person tapping a state updates it for every visitor
+of the site — needs a real backend, since GitHub Pages only serves static files with no
+server or database of its own. That means standing up something like a free Firebase
+Realtime Database or Supabase project (you'd create the account; the API key/URL it gives
+you is safe to put in client-side code) and adding read/write calls in `renderPlates()` /
+`togglePlate()` in `app.js`. Worth knowing: this app has no user accounts, so a fully open
+shared board also means any visitor could clear or spam it — there's no built-in way to
+restrict who can edit it without adding real authentication too.
 
 ## Customizing the item pool
 

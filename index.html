@@ -51,6 +51,7 @@
   <nav class="tabs">
     <button class="tab-btn active" data-tab="board">🎯 Board</button>
     <button class="tab-btn" data-tab="map">🗺️ Map</button>
+    <button class="tab-btn" data-tab="plates">🚙 Plates</button>
   </nav>
 
   <!-- BOARD TAB -->
@@ -102,6 +103,20 @@
 
     <div id="route-stop-list" class="route-stop-list"></div>
   </div>
+
+  <!-- PLATES TAB -->
+  <div id="tab-plates" class="tab-panel">
+    <p class="plates-intro">Tap a state when you spot its license plate! This board is saved on this device only — it won't sync with other phones.</p>
+
+    <div class="progress-wrap plates-progress-wrap">
+      <div class="progress-bar"><div id="plates-progress-fill" class="progress-fill plates-fill"></div></div>
+      <span id="plates-progress-label">0 / 50 states spotted</span>
+    </div>
+
+    <div id="plates-grid" class="plates-grid"></div>
+
+    <button id="reset-plates-btn" class="secondary-btn">🧹 Clear Plate Board</button>
+  </div>
 </section>
 
 <!-- WIN BANNER -->
@@ -137,8 +152,9 @@
   </div>
 </div>
 
-<script src="items.js?v=3"></script>
-<script src="route.js?v=3"></script>
-<script src="app.js?v=3"></script>
+<script src="items.js?v=4"></script>
+<script src="route.js?v=4"></script>
+<script src="states.js?v=4"></script>
+<script src="app.js?v=4"></script>
 </body>
 </html>

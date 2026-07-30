@@ -557,6 +557,85 @@ label input, label select {
 .route-stop-list { padding-bottom: 10px; }
 .route-list-item { cursor: pointer; }
 
+/* ---------- License plate game ---------- */
+.plates-intro {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #555;
+  margin: 0 0 10px;
+}
+
+.plates-progress-wrap { padding: 0 0 6px; }
+
+.plates-fill {
+  background: linear-gradient(90deg, var(--sunny), var(--berry));
+}
+
+.plates-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 14px 0 18px;
+}
+
+.plate-cell {
+  position: relative;
+  aspect-ratio: 2 / 1;
+  border: 3px solid var(--border);
+  border-radius: 8px;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  text-align: center;
+  padding: 2px 4px;
+}
+
+.plate-cell .plate-code {
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.plate-cell .plate-name {
+  font-size: 0.55rem;
+  font-weight: 600;
+  color: #666;
+  line-height: 1.1;
+}
+
+.plate-cell.found {
+  background: var(--grass);
+  color: white;
+}
+
+.plate-cell.found .plate-name { color: white; }
+
+.plate-cell.bonus {
+  border-style: dashed;
+  border-color: var(--plum);
+}
+
+.plate-cell.bonus.found { border-color: var(--border); }
+
+.plate-bonus-tag {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-size: 0.5rem;
+  font-weight: 800;
+  color: var(--plum);
+  text-transform: uppercase;
+}
+
+.plate-cell.found .plate-bonus-tag { color: white; }
+
+@media (min-width: 500px) {
+  .plates-grid { grid-template-columns: repeat(5, 1fr); }
+}
+
 /* ---------- Win banner ---------- */
 .win-banner {
   position: fixed;
