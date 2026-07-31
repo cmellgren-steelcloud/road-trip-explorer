@@ -59,23 +59,44 @@ API, so it works fully offline once loaded (and re-visited once so the browser c
   Routes B and C both swing through **The Original Rainbow Cone** in New Buffalo, MI —
   shown as a special gold milestone marker (🍦) on the map. Switching routes resets that
   route's checkpoint progress.
+- **Extra stops & state-line crossings**: each route also includes additional waypoints
+  through Iowa and Missouri (Columbia/St. Joseph, MO and Des Moines/Iowa City, IA), plus
+  a small dashed "🪧 Entering [State]" checkpoint every time the route crosses into a new
+  state — Route A has 2 of these, Routes B and C have 3 each.
+- **4 visual styles** — pick one on the setup screen, or change anytime via **⚙️ Settings**:
+  Classic, Olympus Odyssey (Greek-myth adventure, gold & parchment), Arena Games (dark,
+  dystopian-competition look), and Dachshund (warm, cozy dog theme). The style is a
+  separate, standalone preference (its own `localStorage` key) — it survives even a full
+  "Reset Entire Trip," and previews live as you click through the options.
 
 ## Customizing the routes
 
 Edit `route.js`:
 
 - `CITIES` is a lookup of every stop used by any route: `{ name, x, y }` (plus optional
-  `subtitle`, `milestone: true`, `emoji`, and `shortLabel` for special stops like the
-  Rainbow Cone). `x`/`y` are hand-placed pixel coordinates on the map's `0 0 870 560` SVG
-  canvas (not a real map projection — just enough to look right).
+  `subtitle`, `milestone: true`, `stateLine: true`, `emoji`, and `shortLabel` for special
+  stops like the Rainbow Cone or a state-line crossing). `x`/`y` are hand-placed pixel
+  coordinates on the map's `0 0 870 560` SVG canvas (not a real map projection — just
+  enough to look right).
 - `ROUTES` is the list of selectable routes, each an ordered array of `{ city, mile }`
   stops referencing `CITIES` by id. `mile` is the approximate cumulative driving distance
   for that specific route, used for the progress bar and for deciding which route segments
-  show as "traveled."
+  show as "traveled." The same state-line `CITIES` entry can be (and is) reused by more
+  than one route when they cross at roughly the same real-world spot — each route just
+  assigns it its own `mile`.
 
 To add or change a route, add/edit entries in `CITIES` and `ROUTES`. If a new route needs
 geography outside the current map's bounds, also adjust the static land/lake shapes in
 `index.html`'s `#route-map-svg`.
+
+## Customizing or adding a style
+
+Edit the `THEMES` array and the `html[data-theme="..."]` blocks in `styles.css`'s `:root`
+section. Every visual choice — colors, card/page backgrounds, map land/lake colors, font,
+even whether headings go uppercase — is a CSS variable, so a new theme is just a new
+`html[data-theme="yourtheme"] { --sunny: ...; }` block plus a matching entry in the
+`THEMES` array in `app.js` (emoji, display name, title emoji, and setup-screen subtitle).
+No JS changes needed beyond that entry.
 
 ## Wanting the license plate board to sync across devices
 

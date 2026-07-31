@@ -3,6 +3,29 @@ const STORAGE_KEY = 'rte_v1';
 const BOARD_SIZE = 5;
 const FREE_INDEX = 12; // center of 5x5
 
+// ---------------- Style / theme (separate from trip state — persists through resets) ----------------
+
+const THEME_STORAGE_KEY = 'rte_theme_v1';
+const THEMES = [
+  { id: 'classic',    emoji: '🚗', name: 'Classic',        titleEmoji: '🚗', subtitle: "Set up your trip, then hand the phone to the kids!" },
+  { id: 'olympus',    emoji: '🏛️', name: 'Olympus Odyssey', titleEmoji: '🏛️', subtitle: 'Chart your epic quest from Kansas City to the shores of Lake Huron!' },
+  { id: 'panem',      emoji: '🔥', name: 'Arena Games',     titleEmoji: '🔥', subtitle: 'May the miles be ever in your favor.' },
+  { id: 'dachshund',  emoji: '🌭', name: 'Dachshund',       titleEmoji: '🌭', subtitle: "Sniff out every stop from Kansas City to Tawas City!" },
+];
+const DEFAULT_THEME_ID = 'classic';
+
+function loadTheme() {
+  try { return localStorage.getItem(THEME_STORAGE_KEY) || DEFAULT_THEME_ID; }
+  catch (e) { return DEFAULT_THEME_ID; }
+}
+
+function saveTheme(id) {
+  try { localStorage.setItem(THEME_STORAGE_KEY, id); } catch (e) { /* ignore */ }
+}
+
+// Applied immediately (before DOMContentLoaded) to minimize the flash of the default style.
+document.documentElement.setAttribute('data-theme', loadTheme());
+
 let state = loadState();
 
 // ---------------- Persistence ----------------
@@ -110,6 +133,42 @@ function renderRoutePicker(container, selectedId) {
     });
     container.appendChild(card);
   });
+}
+
+function applyTheme(id) {
+  document.documentElement.setAttribute('data-theme', id);
+  const theme = THEMES.find(t => t.id === id) || THEMES[0];
+  const titleEmoji = document.getElementById('title-emoji');
+  if (titleEmoji) titleEmoji.textContent = theme.titleEmoji;
+  const titleSubtitle = document.getElementById('title-subtitle');
+  if (titleSubtitle) titleSubtitle.textContent = theme.subtitle;
+}
+
+function renderThemePicker(container, selectedId) {
+  container.innerHTML = '';
+  container.dataset.selectedTheme = selectedId;
+  THEMES.forEach(theme => {
+    const card = document.createElement('div');
+    card.className = 'theme-card' + (theme.id === selectedId ? ' selected' : '');
+    card.innerHTML = `
+      <div class="theme-card-emoji">${theme.emoji}</div>
+      <div class="theme-card-name">${theme.name}</div>
+    `;
+    card.addEventListener('click', () => {
+      container.querySelectorAll('.theme-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      container.dataset.selectedTheme = theme.id;
+      applyTheme(theme.id);
+      saveTheme(theme.id);
+    });
+    container.appendChild(card);
+  });
+}
+
+function initThemePicker() {
+  const current = loadTheme();
+  applyTheme(current);
+  renderThemePicker(document.getElementById('setup-theme-picker'), current);
 }
 
 function initSetupScreen() {
@@ -399,7 +458,10 @@ function renderRouteMap() {
   stops.forEach(stop => {
     const passed = state.routeProgress.passed.includes(stop.cityId);
     const g = document.createElementNS(SVG_NS, 'g');
-    g.setAttribute('class', 'route-marker' + (passed ? ' passed' : '') + (stop.milestone ? ' milestone' : ''));
+    g.setAttribute('class', 'route-marker'
+      + (passed ? ' passed' : '')
+      + (stop.milestone ? ' milestone' : '')
+      + (stop.stateLine ? ' state-line' : ''));
     g.setAttribute('tabindex', '0');
     g.setAttribute('role', 'button');
     g.setAttribute('aria-label', stop.name + (passed ? ' (passed)' : ''));
@@ -407,21 +469,23 @@ function renderRouteMap() {
     const circle = document.createElementNS(SVG_NS, 'circle');
     circle.setAttribute('cx', stop.x);
     circle.setAttribute('cy', stop.y);
-    circle.setAttribute('r', stop.milestone ? 13 : 11);
+    circle.setAttribute('r', stop.milestone ? 13 : (stop.stateLine ? 9 : 11));
     g.appendChild(circle);
 
     const glyph = document.createElementNS(SVG_NS, 'text');
     glyph.setAttribute('x', stop.x);
     glyph.setAttribute('y', stop.y);
     glyph.setAttribute('class', 'marker-check');
-    glyph.textContent = passed ? '✓' : (stop.milestone ? stop.emoji : '');
+    glyph.textContent = passed ? '✓' : (stop.emoji || '');
     if (glyph.textContent) g.appendChild(glyph);
 
     const label = document.createElementNS(SVG_NS, 'text');
     label.setAttribute('x', stop.x);
-    label.setAttribute('y', stop.y - (stop.milestone ? 18 : 16));
-    label.setAttribute('class', 'marker-label' + (stop.milestone ? ' milestone-label' : ''));
-    label.textContent = stop.milestone ? (stop.shortLabel || stop.name) : stop.name.split(',')[0];
+    label.setAttribute('y', stop.y - (stop.milestone ? 18 : (stop.stateLine ? 14 : 16)));
+    label.setAttribute('class', 'marker-label'
+      + (stop.milestone ? ' milestone-label' : '')
+      + (stop.stateLine ? ' state-line-label' : ''));
+    label.textContent = stop.shortLabel || (stop.milestone ? stop.name : stop.name.split(',')[0]);
     g.appendChild(label);
 
     g.addEventListener('click', () => toggleStopPassed(stop.cityId));
@@ -454,7 +518,7 @@ function renderRouteMap() {
     const row = document.createElement('div');
     row.className = 'checklist-item route-list-item' + (passed ? ' found' : '');
     row.innerHTML = `
-      <div class="cell-emoji">${passed ? '🚗' : (stop.milestone ? stop.emoji : '📍')}</div>
+      <div class="cell-emoji">${passed ? '🚗' : (stop.emoji || '📍')}</div>
       <div class="item-info">
         <div class="item-label">${stop.name}</div>
         <div class="item-fact">${stop.subtitle ? stop.subtitle + ' — ' : ''}Mile ${stop.mile} of ${totalMiles}</div>
@@ -561,6 +625,7 @@ function openSettings() {
   document.getElementById('s-trip-name').value = state.settings.tripName;
   document.getElementById('s-region-select').value = state.settings.region;
   renderRoutePicker(document.getElementById('s-route-picker'), state.settings.routeId);
+  renderThemePicker(document.getElementById('s-theme-picker'), loadTheme());
   document.getElementById('settings-modal').classList.remove('hidden');
 }
 
@@ -628,6 +693,7 @@ function initSettings() {
 // ---------------- Init ----------------
 
 document.addEventListener('DOMContentLoaded', () => {
+  initThemePicker();
   initSetupScreen();
   initTabs();
   initSettings();

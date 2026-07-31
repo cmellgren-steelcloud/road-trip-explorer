@@ -14,8 +14,8 @@
 <!-- SETUP SCREEN -->
 <section id="setup-screen" class="screen">
   <div class="setup-card">
-    <h1>🚗 Road Trip Explorer</h1>
-    <p class="subtitle">Set up your trip, then hand the phone to the kids!</p>
+    <h1><span id="title-emoji">🚗</span> <span id="title-text">Road Trip Explorer</span></h1>
+    <p class="subtitle" id="title-subtitle">Set up your trip, then hand the phone to the kids!</p>
 
     <label>Trip name
       <input type="text" id="trip-name" placeholder="e.g. Grandma's House 2026" maxlength="40">
@@ -28,6 +28,9 @@
 
     <label>Which way are you driving? (Kansas City, MO &rarr; Tawas City, MI)</label>
     <div class="route-picker" id="setup-route-picker"></div>
+
+    <label>Pick a style</label>
+    <div class="theme-picker" id="setup-theme-picker"></div>
 
     <button id="start-trip-btn" class="primary-btn">Start the Trip! 🎉</button>
   </div>
@@ -148,6 +151,9 @@
     <label>Driving route
       <div class="route-picker" id="s-route-picker"></div>
     </label>
+    <label>Style
+      <div class="theme-picker" id="s-theme-picker"></div>
+    </label>
     <div class="modal-actions">
       <button id="settings-save-btn" class="primary-btn">Save</button>
       <button id="settings-cancel-btn" class="secondary-btn">Cancel</button>
@@ -159,9 +165,9 @@
   </div>
 </div>
 
-<script src="items.js?v=5"></script>
-<script src="route.js?v=5"></script>
-<script src="states.js?v=5"></script>
-<script src="app.js?v=5"></script>
+<script src="items.js?v=6"></script>
+<script src="route.js?v=6"></script>
+<script src="states.js?v=6"></script>
+<script src="app.js?v=6"></script>
 </body>
 </html>

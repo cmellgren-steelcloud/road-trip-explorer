@@ -1,4 +1,5 @@
-:root {
+:root,
+html[data-theme="classic"] {
   --sunny: #ffb703;
   --sky: #4cc9f0;
   --grass: #52b788;
@@ -7,10 +8,86 @@
   --ink: #1d2333;
   --paper: #fffdf7;
   --paper-dim: #f1ede1;
+  --card-bg: #ffffff;
   --border: #1d2333;
+  --bg-top: #bfe9ff;
+  --bg-top2: #eaf7ff;
+  --map-land: #f4e9c9;
+  --map-lake: #a9ddf3;
+  --map-lake-border: #2a6f97;
+  --muted: #555555;
+  --heading-transform: none;
   --radius: 16px;
   --shadow: 4px 4px 0 var(--ink);
+  --font-family: "Baloo 2", "Comic Sans MS", "Trebuchet MS", system-ui, sans-serif;
   color-scheme: light;
+}
+
+/* ---------- Theme: Olympus Odyssey (Greek-myth adventure) ---------- */
+html[data-theme="olympus"] {
+  --sunny: #c9a227;
+  --sky: #5b8fae;
+  --grass: #6b8f4e;
+  --berry: #a63d33;
+  --plum: #6a4fa0;
+  --ink: #2b2013;
+  --paper: #f7f0dc;
+  --paper-dim: #ecdfc0;
+  --card-bg: #fdf8ec;
+  --border: #6b4f2a;
+  --bg-top: #a9c9dc;
+  --bg-top2: #dceaf0;
+  --map-land: #e8d9ad;
+  --map-lake: #8fbfd6;
+  --map-lake-border: #3d6a82;
+  --muted: #5c4a30;
+  --heading-transform: none;
+  --font-family: "Papyrus", "Trattatello", Georgia, "Times New Roman", serif;
+}
+
+/* ---------- Theme: Panem Arena (dark dystopian games) ---------- */
+html[data-theme="panem"] {
+  --sunny: #d4af37;
+  --sky: #6a6a6a;
+  --grass: #5a7350;
+  --berry: #8b1e1e;
+  --plum: #e07a1f;
+  --ink: #efe9df;
+  --paper: #2a2a2a;
+  --paper-dim: #1c1c1c;
+  --card-bg: #2a2a2a;
+  --border: #d4af37;
+  --bg-top: #141414;
+  --bg-top2: #232323;
+  --map-land: #3a3a34;
+  --map-lake: #26313a;
+  --map-lake-border: #d4af37;
+  --muted: #b8b3a8;
+  --heading-transform: uppercase;
+  --font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  color-scheme: dark;
+}
+
+/* ---------- Theme: Dachshund (warm & cute dog theme) ---------- */
+html[data-theme="dachshund"] {
+  --sunny: #e8a33d;
+  --sky: #7ec8e3;
+  --grass: #7a9d54;
+  --berry: #c1443a;
+  --plum: #8a5a3c;
+  --ink: #3b2a1e;
+  --paper: #fff8ef;
+  --paper-dim: #f3e6d3;
+  --card-bg: #fffaf2;
+  --border: #5c3a22;
+  --bg-top: #d7ecf7;
+  --bg-top2: #f7ecd9;
+  --map-land: #f0dab3;
+  --map-lake: #a8d4e6;
+  --map-lake-border: #3d6a82;
+  --muted: #6b5847;
+  --heading-transform: none;
+  --font-family: "Baloo 2", "Comic Sans MS", "Trebuchet MS", system-ui, sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -18,14 +95,19 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: linear-gradient(180deg, #bfe9ff 0%, #eaf7ff 220px, var(--paper-dim) 220px);
-  font-family: "Baloo 2", "Comic Sans MS", "Trebuchet MS", system-ui, sans-serif;
+  background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-top2) 220px, var(--paper-dim) 220px);
+  font-family: var(--font-family);
   color: var(--ink);
   min-height: 100vh;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 button {
   font-family: inherit;
+}
+
+h1, h2, h3, h4, .primary-btn, .tab-btn, .toggle-btn {
+  text-transform: var(--heading-transform);
 }
 
 input, select {
@@ -63,7 +145,7 @@ input, select {
 .subtitle {
   text-align: center;
   margin: 0 0 20px;
-  color: #555;
+  color: var(--muted);
 }
 
 label {
@@ -81,13 +163,13 @@ label input, label select {
   border: 2px solid var(--border);
   border-radius: 10px;
   font-weight: 400;
-  background: white;
+  background: var(--card-bg);
 }
 
 .region-desc {
   margin: -8px 0 14px;
   font-size: 0.85rem;
-  color: #555;
+  color: var(--muted);
 }
 
 .route-note {
@@ -100,7 +182,7 @@ label input, label select {
 
 .hint {
   font-size: 0.78rem;
-  color: #666;
+  color: var(--muted);
   font-weight: 400;
   line-height: 1.4;
 }
@@ -130,7 +212,7 @@ label input, label select {
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--ink);
-  background: white;
+  background: var(--card-bg);
   border: 2px solid var(--border);
   border-radius: 12px;
   cursor: pointer;
@@ -143,7 +225,7 @@ label input, label select {
   font-size: 0.9rem;
   font-weight: 700;
   color: var(--berry);
-  background: white;
+  background: var(--card-bg);
   border: 2px solid var(--berry);
   border-radius: 12px;
   cursor: pointer;
@@ -173,6 +255,7 @@ label input, label select {
 .region-badge {
   font-size: 0.75rem;
   background: var(--sunny);
+  color: #241a0a;
   border: 2px solid var(--border);
   border-radius: 999px;
   padding: 2px 10px;
@@ -180,7 +263,7 @@ label input, label select {
 }
 
 .icon-btn {
-  background: white;
+  background: var(--card-bg);
   border: 2px solid var(--border);
   border-radius: 10px;
   font-size: 1.2rem;
@@ -196,7 +279,7 @@ label input, label select {
 
 .progress-bar {
   height: 16px;
-  background: white;
+  background: var(--card-bg);
   border: 2px solid var(--border);
   border-radius: 999px;
   overflow: hidden;
@@ -230,7 +313,7 @@ label input, label select {
   font-weight: 800;
   border: 2px solid var(--border);
   border-radius: 12px;
-  background: white;
+  background: var(--card-bg);
   cursor: pointer;
 }
 
@@ -259,12 +342,13 @@ label input, label select {
   font-weight: 700;
   border: 2px solid var(--border);
   border-radius: 12px;
-  background: white;
+  background: var(--card-bg);
   cursor: pointer;
 }
 
 .toggle-btn.active {
   background: var(--sunny);
+  color: #241a0a;
 }
 
 /* ---------- Bingo grid ---------- */
@@ -278,7 +362,7 @@ label input, label select {
   aspect-ratio: 1 / 1;
   border: 2px solid var(--border);
   border-radius: 10px;
-  background: white;
+  background: var(--card-bg);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -309,6 +393,7 @@ label input, label select {
 
 .bingo-cell.free {
   background: var(--sunny);
+  color: #241a0a;
   font-weight: 800;
   cursor: default;
 }
@@ -337,7 +422,7 @@ label input, label select {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: white;
+  background: var(--card-bg);
   border: 2px solid var(--border);
   border-radius: 12px;
   padding: 10px 12px;
@@ -355,7 +440,7 @@ label input, label select {
 
 .checklist-item .item-info { flex: 1; }
 .checklist-item .item-label { font-weight: 700; }
-.checklist-item .item-fact { font-size: 0.75rem; color: #666; font-weight: 400; margin-top: 2px; }
+.checklist-item .item-fact { font-size: 0.75rem; color: var(--muted); font-weight: 400; margin-top: 2px; }
 
 .checklist-item .points-badge {
   font-size: 0.7rem;
@@ -376,7 +461,7 @@ label input, label select {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: white;
+  background: var(--card-bg);
 }
 
 .checklist-item.found .checkbox {
@@ -396,13 +481,20 @@ label input, label select {
   border: 2px solid var(--border);
   border-radius: 12px;
   padding: 10px 12px;
-  background: white;
+  background: var(--card-bg);
   cursor: pointer;
 }
 
 .route-card.selected {
   background: var(--sunny);
   box-shadow: var(--shadow);
+}
+
+/* --sunny is a light/warm gold-ish tone in every theme, so force dark, readable
+   text here rather than inheriting --ink/--muted (which flip light for dark themes). */
+.route-card.selected,
+.route-card.selected * {
+  color: #241a0a;
 }
 
 .route-card-name {
@@ -412,13 +504,48 @@ label input, label select {
 
 .route-card-via {
   font-size: 0.78rem;
-  color: #555;
+  color: var(--muted);
   margin-top: 2px;
 }
 
 .route-card-miles {
   font-size: 0.75rem;
   font-weight: 700;
+  margin-top: 4px;
+}
+
+/* ---------- Style / theme picker (setup screen & settings modal) ---------- */
+.theme-picker {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.theme-card {
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 8px;
+  background: var(--card-bg);
+  cursor: pointer;
+  text-align: center;
+}
+
+.theme-card.selected {
+  background: var(--sunny);
+  box-shadow: var(--shadow);
+}
+
+.theme-card.selected,
+.theme-card.selected * {
+  color: #241a0a;
+}
+
+.theme-card-emoji { font-size: 1.4rem; line-height: 1; }
+
+.theme-card-name {
+  font-weight: 800;
+  font-size: 0.8rem;
   margin-top: 4px;
 }
 
@@ -431,7 +558,7 @@ label input, label select {
 .route-subtitle {
   text-align: center;
   font-size: 0.8rem;
-  color: #555;
+  color: var(--muted);
   margin: 0 0 10px;
 }
 
@@ -453,7 +580,7 @@ label input, label select {
 }
 
 .route-map-card {
-  background: white;
+  background: var(--card-bg);
   border: 2px solid var(--border);
   border-radius: 12px;
   padding: 10px;
@@ -467,7 +594,7 @@ label input, label select {
 }
 
 .route-svg .land {
-  fill: #f4e9c9;
+  fill: var(--map-land);
   stroke: var(--border);
   stroke-width: 3;
   stroke-linejoin: round;
@@ -475,8 +602,8 @@ label input, label select {
 }
 
 .route-svg .lake {
-  fill: #a9ddf3;
-  stroke: #2a6f97;
+  fill: var(--map-lake);
+  stroke: var(--map-lake-border);
   stroke-width: 1.5;
 }
 
@@ -524,6 +651,19 @@ label input, label select {
   stroke: var(--border);
 }
 
+.route-marker.state-line circle {
+  fill: var(--paper-dim);
+  stroke: var(--sky);
+  stroke-width: 2;
+  stroke-dasharray: 3 2;
+}
+
+.route-marker.state-line.passed circle {
+  fill: var(--grass);
+  stroke: var(--border);
+  stroke-dasharray: none;
+}
+
 .route-marker .marker-check {
   text-anchor: middle;
   dominant-baseline: central;
@@ -549,6 +689,11 @@ label input, label select {
   fill: var(--plum);
 }
 
+.route-marker .marker-label.state-line-label {
+  font-size: 10px;
+  fill: var(--sky);
+}
+
 .map-caption {
   text-align: center;
   margin: 8px 0 0;
@@ -561,7 +706,7 @@ label input, label select {
 .plates-intro {
   text-align: center;
   font-size: 0.8rem;
-  color: #555;
+  color: var(--muted);
   margin: 0 0 10px;
 }
 
@@ -583,7 +728,7 @@ label input, label select {
   min-height: 66px;
   border: 3px solid var(--border);
   border-radius: 8px;
-  background: white;
+  background: var(--card-bg);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -602,7 +747,7 @@ label input, label select {
 .plate-cell .plate-code {
   font-size: 0.62rem;
   font-weight: 700;
-  color: #777;
+  color: var(--muted);
   letter-spacing: 0.5px;
   margin-top: 3px;
 }
@@ -629,7 +774,7 @@ label input, label select {
 .bonus-heading span {
   font-size: 0.75rem;
   font-weight: 700;
-  color: #666;
+  color: var(--muted);
 }
 
 .bonus-caption {
